@@ -6,13 +6,14 @@ import html
 from bs4 import BeautifulSoup
 import re
 import logging
+from typing import Tuple
 from .insert_queries import LEGISLATION_QUERY, LEGISLATION_VERSION_QUERY, JURISDICTION_QUERY, ISSUING_BODY_QUERY, PART_QUERY
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def create_db_connection(driver, server, username, password, database=None):
+def create_db_connection(driver: str, server: str, username: str, password: str, database: str = None) -> Tuple[pyodbc.Connection, pyodbc.Cursor]:    
     if database:
         conn = pyodbc.connect(
             f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};TrustServerCertificate=yes;"
@@ -25,7 +26,7 @@ def create_db_connection(driver, server, username, password, database=None):
     return conn, cursor
 
 
-def create_database(driver, server, database, username, password):
+def create_database(driver, server, database, username, password) -> None:
     conn, cursor = create_db_connection(driver=driver, server=server, username=username, password=password)
     try:
         cursor.execute(f"CREATE DATABASE {database}")
@@ -33,7 +34,8 @@ def create_database(driver, server, database, username, password):
         logger.info(str(e))
     conn.close()
 
-def drop_database(driver, server, database, username, password):
+
+def drop_database(driver, server, database, username, password) -> None:
     conn, cursor = create_db_connection(driver=driver, server=server, username=username, password=password)
     try:
         cursor.execute(f"DROP DATABASE {database}")
@@ -42,7 +44,7 @@ def drop_database(driver, server, database, username, password):
     conn.close()    
 
 
-def execute_sql_file(cursor, sql_file_path, sep=None):
+def execute_sql_file(cursor: pyodbc.Cursor, sql_file_path: str, sep=None) -> None:
     with open(sql_file_path) as f:
         queries = f.read()
         if sep:
@@ -52,7 +54,8 @@ def execute_sql_file(cursor, sql_file_path, sep=None):
         else:
             cursor.execute(queries)
 
-def strip_html(string, re_sub_entities=None):
+
+def strip_html(string: str, re_sub_entities: re.Pattern=None):
     # unescape HTML entities
     unescaped_string = html.unescape(string)
     # strip HTML tags
@@ -65,7 +68,16 @@ def strip_html(string, re_sub_entities=None):
     return stripped_string
 
 
-def etl(data, cursor, re_sub):
+def etl(data: dict, cursor: pyodbc.Cursor, re_sub: re.Pattern):
+    """
+    Runs ETL for a given SQL Serer cursor
+
+    args:
+        data: parsed data dictionary containing legislation data
+        cursor: database cursor object already instantiated
+        re_sub: re pattern already compiled for better performance, used to strip content of html entities
+    """
+
     # insert legislation
     item = data[0]
     cursor.execute(
@@ -108,13 +120,20 @@ def etl(data, cursor, re_sub):
         )
 
 
-def get_files(path):
+def get_files(path: str) -> list:
     return [os.path.join(path, n) for n in os.listdir(path)]
 
 
-def local_run(driver, server, database, username, password, legislation_path="legislation_etl"):
+def local_run(driver: str, server: str, database: str, username: str, password: str, legislation_path="legislation_etl") -> None:
     """
-    Local Execution
+    Local Execution of legislation ETL
+
+    args:
+        driver: The name of the ODBC driver to use (e.g. 'ODBC Driver 17 for SQL Server').
+        server: The name or IP address of the server hosting the database (use host IP if using docker service).
+        database: The name of the database to connect to.
+        username: The username to use for authentication.
+        password: The password to use for authentication.
     """
         
     logger.info("Connecting...")
@@ -136,8 +155,11 @@ def local_run(driver, server, database, username, password, legislation_path="le
     for file in files:
         logger.info(f"Processing file: {file}")
         with open(file) as f:
-            data = json.load(f)
-            etl(data, cursor, re_sub)
+            try:
+                data = json.load(f)
+                etl(data, cursor, re_sub)
+            except json.decoder.JSONDecodeError as e:
+                logger.error(f"Could not process file {file}. Error: {e}")
     conn.commit()
     conn.close()
     logger.info(f"Total time: {time.time() - start}")

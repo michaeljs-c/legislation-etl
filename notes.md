@@ -9,11 +9,12 @@ Notes recorded during development process.
 2. Set up SQL Server
 3. ETL
     - Parse json
-    - Insert
+    - Insert to DB
 4. Dockerise
 5. Shift to cloud
 
 
+Run SQL Server container
 ```sh
 # userid = 'sa'
 docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=rootPassword1" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
@@ -31,32 +32,39 @@ source ~/.bashrc
 ```
 <!-- CREATE TABLE Persons (PersonID int,LastName varchar(255),FirstName varchar(255),Address varchar(255),City varchar(255)); -->
 
+Reset linux clock
+```sh
 sudo hwclock --hctosys
+```
 
+Connect to local db
+```sh
 sqlcmd -U sa -P rootPassword1 -H localhost -Q "create database legistlation" -S "(local)"
 sqlcmd -U sa -P rootPassword1 -H localhost -i create_tables.sql -d legislation -S "(local)"
-
+```
+Build and run app
+```sh
 docker build -t cube-etl .
 docker build --no-cache -t cube-etl .
 docker run -it cube-etl
+```
 
-
+Azure steps
 1. Setup sql server
-2. Setup bucket
-3. Setup function
+2. Setup blob bucket
+3. Setup Azure function
 4. Get credentials string / secrets for function
 5. Write stored procedure, query
 
-
 Azure setup
-
-Extensions
+VS Code Extensions
 1. Azure Resources
 2. Azure Functions
 
-Venv
+Venv for app
+```sh
 sudo apt-get install python3-venv
-
+```
 
 Setup Azure core tools
 ```sh
@@ -72,13 +80,16 @@ Setup Azure CLI
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 ```
 
-Setup function
+Setup new function
 ```sh
 func init legistlation_etl --worker-runtime python
 func new --template "Http Trigger" --name trigger_etl --worker-runtime python
-```
 func azure functionapp publish cube-etl
+```
 
+Build and run app
+```sh
 docker build -f local/Dockerfile -t cube-etl .
 docker run -v legislation_files:/app/legislation_files -it cube-etl -P rootPassword1 -S 172.21.0.1 -U sa
 python3 local_etl_cli.py -P rootPassword1 -S 172.21.0.1 -U sa -f legislation_files
+```

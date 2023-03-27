@@ -11,14 +11,24 @@ import os
 
 logging.basicConfig(level=logging.INFO)
 
+KEY_VAULT_NAME = "cube-key-vault"
+BLOB_CONN_CONTAINER = "cube-data"
+DB_CONN_STR_NAME = "dbconnectionstring2"
+BLOB_CONN_STR_NAME = "blobconnectionstring"
 
-def run_etl(drop_data=False):
-    key_vault_name = "cube-key-vault"
-    kv_uri = f"https://{key_vault_name}.vault.azure.net"
+def run_etl(drop_data:bool = False) -> None:
+    """
+    Run Azure ETL using secrets connection strings to access blob data and SQL Server
+
+    args:
+        drop_data: Recreates tables without running ETL
+    """
+
+    kv_uri = f"https://{KEY_VAULT_NAME}.vault.azure.net"
     credential = DefaultAzureCredential()
     client = SecretClient(vault_url=kv_uri, credential=credential)
 
-    db_conn_str = client.get_secret("dbconnectionstring2").value
+    db_conn_str = client.get_secret(DB_CONN_STR_NAME).value
     conn = pyodbc.connect(db_conn_str, autocommit=True)
     cursor = conn.cursor()
 
@@ -29,10 +39,9 @@ def run_etl(drop_data=False):
         logging.info("Dropping data from tables")
         return
 
-    blob_conn_container = "cube-data"
-    blob_conn_str = client.get_secret("blobconnectionstring").value
+    blob_conn_str = client.get_secret(BLOB_CONN_STR_NAME).value
 
-    blob_container = ContainerClient.from_connection_string(conn_str=blob_conn_str, container_name=blob_conn_container)
+    blob_container = ContainerClient.from_connection_string(conn_str=blob_conn_str, container_name=BLOB_CONN_CONTAINER)
     blob_list = blob_container.list_blobs()
 
     re_sub = re.compile('&\w+;')
@@ -40,7 +49,7 @@ def run_etl(drop_data=False):
     for blob in blob_list:
         logging.info(f"Processing file {blob['name']}")
 
-        blob = BlobClient.from_connection_string(conn_str=blob_conn_str, container_name=blob_conn_container, blob_name=blob['name'])
+        blob = BlobClient.from_connection_string(conn_str=blob_conn_str, container_name=BLOB_CONN_CONTAINER, blob_name=blob['name'])
         blob_data = blob.download_blob().readall()
         json_data = blob_data.decode('utf-8')
         data = json.loads(json_data)
@@ -75,14 +84,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     if function == "etl":
         logging.info("Running ETL!")
-        run_etl()
-        
+        try:
+            run_etl()
+        except Exception as e:
+            logging.error(e)
+            return func.HttpResponse("500 Internal Error", status_code=500)    
+
         html = "<html><body><h1>ETL executed successfully!</h1></body></html>"
         return func.HttpResponse(html, mimetype="text/html", status_code=200)
         
     elif function == "drop":
         logging.info("Dropping database")
-        run_etl(drop_data=True)
+        try:
+            run_etl(drop_data=True)
+        except Exception as e:
+            logging.error(e)
+            return func.HttpResponse("500 Internal Error", status_code=500)    
         
         html = "<html><body><h1>Data dropped successfully! Query the data to check.</h1></body></html>"
         return func.HttpResponse(html, mimetype="text/html", status_code=200)

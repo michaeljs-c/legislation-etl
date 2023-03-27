@@ -1,11 +1,18 @@
-# Cube ETL Assignment
+# Legislation ETL
 
 ## Directory structure
 1. legislation_files - contains json files with legislation data
-2. local - files for building and running local dockerised app
-3. trigger_etl - core assignment files
+2. local - docker files for building and running local dockerised app
+3. trigger_etl - core functionality
     - azure_etl.py - Azure app entry point
     - etl.py - core functionality for both azure and local deployment
+
+## Data Models
+1. legislation
+2. legislation_version
+3. issuing_body
+4. jurisdiction
+5. part
 
 ## Running the application locally
 
@@ -14,10 +21,13 @@ Bringing up SQL Server:
 cd local
 docker-compose up
 ```
-Building the app image (this was developed on linux machine, no guarentee to work on Windows, if any issues call the CLI with python instead):
+Building the app image:
 ```
 docker build -f local/Dockerfile -t cube-etl .
 ```
+The image was developed on a linux machine, no guarentee that the odbc setup script will work on Windows, if any issues:
+- Replace the setup_odbc.sh file with suitable odbc setup script (and change Dockerfile line: `RUN bash -c "./setup_odbc.sh"`), or,
+- Call the CLI directly with python instead (see below)
 
 Running the app:
 ```sh
@@ -37,7 +47,7 @@ docker run -it cube-etl --help
 ## Azure Function API
 The API can either be called via a web browser or via API request as demonstrated below.
 
-To Run the ETL:
+To Run the ETL (FYI this takes ~5 minutes, expect this much time before receiving a http response):
 ```py
 import requests
 
@@ -87,3 +97,12 @@ EXEC search_legislation
 EXEC search_any 
 	@Search = 'tax'
 ```
+
+## Next Steps
+1. Unit and integration testing
+2. Move db credentials to env variables (create config files for other hard coded vars)
+2. Event trigger for ETL when new files placed in blob bucket
+    - Possibly move processed files into different bucket
+3. Data validation for input json files
+4. Power BI dashboard for insights
+5. Look for any inefficiencies (container/azurefunc memory, query performance etc)
