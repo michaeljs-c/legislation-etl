@@ -1,11 +1,12 @@
 # Cube ETL assignment
+Notes recorded during development process.
 
 1. Define data models
     1. Legislation
     2. Jurisdiction
     3. Body
     4. Part
-2. Set up postgres
+2. Set up SQL Server
 3. ETL
     - Parse json
     - Insert
