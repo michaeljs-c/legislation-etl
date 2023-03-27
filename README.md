@@ -108,3 +108,4 @@ EXEC search_any
 3. Data validation for input json files
 4. Power BI dashboard for insights
 5. Look for any inefficiencies (container/azurefunc memory, query performance etc)
+6. CI/CD (github actions / jenkins)

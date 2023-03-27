@@ -7,27 +7,40 @@ from bs4 import BeautifulSoup
 import re
 import logging
 from typing import Tuple
-from .insert_queries import LEGISLATION_QUERY, LEGISLATION_VERSION_QUERY, JURISDICTION_QUERY, ISSUING_BODY_QUERY, PART_QUERY
+from .insert_queries import (
+    LEGISLATION_QUERY,
+    LEGISLATION_VERSION_QUERY,
+    JURISDICTION_QUERY,
+    ISSUING_BODY_QUERY,
+    PART_QUERY,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def create_db_connection(driver: str, server: str, username: str, password: str, database: str = None) -> Tuple[pyodbc.Connection, pyodbc.Cursor]:    
+def create_db_connection(
+    driver: str, server: str, username: str, password: str, database: str = None
+) -> Tuple[pyodbc.Connection, pyodbc.Cursor]:
     if database:
         conn = pyodbc.connect(
             f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};TrustServerCertificate=yes;"
         )
     else:
         conn = pyodbc.connect(
-            f"DRIVER={driver};SERVER={server};UID={username};PWD={password};TrustServerCertificate=yes;", autocommit=True
+            f"DRIVER={driver};SERVER={server};UID={username};PWD={password};TrustServerCertificate=yes;",
+            autocommit=True,
         )
     cursor = conn.cursor()
     return conn, cursor
 
 
-def create_database(driver, server, database, username, password) -> None:
-    conn, cursor = create_db_connection(driver=driver, server=server, username=username, password=password)
+def create_database(
+    driver: str, server: str, database: str, username: str, password: str
+) -> None:
+    conn, cursor = create_db_connection(
+        driver=driver, server=server, username=username, password=password
+    )
     try:
         cursor.execute(f"CREATE DATABASE {database}")
     except Exception as e:
@@ -35,13 +48,17 @@ def create_database(driver, server, database, username, password) -> None:
     conn.close()
 
 
-def drop_database(driver, server, database, username, password) -> None:
-    conn, cursor = create_db_connection(driver=driver, server=server, username=username, password=password)
+def create_database(
+    driver: str, server: str, database: str, username: str, password: str
+) -> None:
+    conn, cursor = create_db_connection(
+        driver=driver, server=server, username=username, password=password
+    )
     try:
         cursor.execute(f"DROP DATABASE {database}")
     except Exception as e:
         logger.info(str(e))
-    conn.close()    
+    conn.close()
 
 
 def execute_sql_file(cursor: pyodbc.Cursor, sql_file_path: str, sep=None) -> None:
@@ -55,15 +72,15 @@ def execute_sql_file(cursor: pyodbc.Cursor, sql_file_path: str, sep=None) -> Non
             cursor.execute(queries)
 
 
-def strip_html(string: str, re_sub_entities: re.Pattern=None):
+def strip_html(string: str, re_sub_entities: re.Pattern = None):
     # unescape HTML entities
     unescaped_string = html.unescape(string)
     # strip HTML tags
-    soup = BeautifulSoup(unescaped_string, 'html.parser')
+    soup = BeautifulSoup(unescaped_string, "html.parser")
     stripped_string = soup.get_text()
     # strip any remaining entities
     if re_sub_entities:
-        stripped_string = re_sub_entities.sub('', stripped_string)
+        stripped_string = re_sub_entities.sub("", stripped_string)
 
     return stripped_string
 
@@ -116,7 +133,9 @@ def etl(data: dict, cursor: pyodbc.Cursor, re_sub: re.Pattern):
             item["Content"],
             strip_html(item["Content"], re_sub),
             item["NativeContent"],
-            strip_html(item["NativeContent"]) if item["NativeContent"] is not None else None
+            strip_html(item["NativeContent"])
+            if item["NativeContent"] is not None
+            else None,
         )
 
 
@@ -124,7 +143,14 @@ def get_files(path: str) -> list:
     return [os.path.join(path, n) for n in os.listdir(path)]
 
 
-def local_run(driver: str, server: str, database: str, username: str, password: str, legislation_path="legislation_etl") -> None:
+def local_run(
+    driver: str,
+    server: str,
+    database: str,
+    username: str,
+    password: str,
+    legislation_path="legislation_etl",
+) -> None:
     """
     Local Execution of legislation ETL
 
@@ -135,7 +161,7 @@ def local_run(driver: str, server: str, database: str, username: str, password: 
         username: The username to use for authentication.
         password: The password to use for authentication.
     """
-        
+
     logger.info("Connecting...")
     create_database(driver, server, database, username, password)
 
@@ -145,11 +171,13 @@ def local_run(driver: str, server: str, database: str, username: str, password: 
 
     curr_directory = os.path.dirname(os.path.realpath(__file__))
     execute_sql_file(cursor, os.path.join(curr_directory, "create_tables.sql"))
-    execute_sql_file(cursor, os.path.join(curr_directory, "stored_procedures.sql"), sep="GO")
-    
+    execute_sql_file(
+        cursor, os.path.join(curr_directory, "stored_procedures.sql"), sep="GO"
+    )
+
     logger.info("Running etl")
     start = time.time()
-    re_sub = re.compile('&\w+;')
+    re_sub = re.compile("&\w+;")
     files = get_files(legislation_path)
 
     for file in files:
@@ -163,5 +191,3 @@ def local_run(driver: str, server: str, database: str, username: str, password: 
     conn.commit()
     conn.close()
     logger.info(f"Total time: {time.time() - start}")
-
-    

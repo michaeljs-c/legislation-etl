@@ -16,7 +16,8 @@ BLOB_CONN_CONTAINER = "cube-data"
 DB_CONN_STR_NAME = "dbconnectionstring2"
 BLOB_CONN_STR_NAME = "blobconnectionstring"
 
-def run_etl(drop_data:bool = False) -> None:
+
+def run_etl(drop_data: bool = False) -> None:
     """
     Run Azure ETL using secrets connection strings to access blob data and SQL Server
 
@@ -33,7 +34,9 @@ def run_etl(drop_data:bool = False) -> None:
     cursor = conn.cursor()
 
     execute_sql_file(cursor, os.path.join("trigger_etl", "create_tables.sql"))
-    execute_sql_file(cursor, os.path.join("trigger_etl", "stored_procedures.sql"), sep="GO")
+    execute_sql_file(
+        cursor, os.path.join("trigger_etl", "stored_procedures.sql"), sep="GO"
+    )
 
     if drop_data:
         logging.info("Dropping data from tables")
@@ -41,46 +44,52 @@ def run_etl(drop_data:bool = False) -> None:
 
     blob_conn_str = client.get_secret(BLOB_CONN_STR_NAME).value
 
-    blob_container = ContainerClient.from_connection_string(conn_str=blob_conn_str, container_name=BLOB_CONN_CONTAINER)
+    blob_container = ContainerClient.from_connection_string(
+        conn_str=blob_conn_str, container_name=BLOB_CONN_CONTAINER
+    )
     blob_list = blob_container.list_blobs()
 
-    re_sub = re.compile('&\w+;')
+    re_sub = re.compile("&\w+;")
 
     for blob in blob_list:
         logging.info(f"Processing file {blob['name']}")
 
-        blob = BlobClient.from_connection_string(conn_str=blob_conn_str, container_name=BLOB_CONN_CONTAINER, blob_name=blob['name'])
+        blob = BlobClient.from_connection_string(
+            conn_str=blob_conn_str,
+            container_name=BLOB_CONN_CONTAINER,
+            blob_name=blob["name"],
+        )
         blob_data = blob.download_blob().readall()
-        json_data = blob_data.decode('utf-8')
+        json_data = blob_data.decode("utf-8")
         data = json.loads(json_data)
 
         etl(data, cursor, re_sub)
-        
+
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Python HTTP trigger function processed a request.')
+    logging.info("Python HTTP trigger function processed a request.")
 
-    name = req.params.get('name')
+    name = req.params.get("name")
     if not name:
         try:
             req_body = req.get_json()
         except ValueError:
             pass
         else:
-            name = req_body.get('name')
+            name = req_body.get("name")
 
     if name:
         html = f"<html><body><h1>Hello, {name}!</h1></body></html>"
         return func.HttpResponse(html, mimetype="text/html", status_code=200)
-    
-    function = req.params.get('function')
+
+    function = req.params.get("function")
     if not function:
         try:
             req_body = req.get_json()
         except ValueError:
             pass
         else:
-            function = req_body.get('function')
+            function = req_body.get("function")
 
     if function == "etl":
         logging.info("Running ETL!")
@@ -88,19 +97,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             run_etl()
         except Exception as e:
             logging.error(e)
-            return func.HttpResponse("500 Internal Error", status_code=500)    
+            return func.HttpResponse("500 Internal Error", status_code=500)
 
         html = "<html><body><h1>ETL executed successfully!</h1></body></html>"
         return func.HttpResponse(html, mimetype="text/html", status_code=200)
-        
+
     elif function == "drop":
         logging.info("Dropping database")
         try:
             run_etl(drop_data=True)
         except Exception as e:
             logging.error(e)
-            return func.HttpResponse("500 Internal Error", status_code=500)    
-        
+            return func.HttpResponse("500 Internal Error", status_code=500)
+
         html = "<html><body><h1>Data dropped successfully! Query the data to check.</h1></body></html>"
         return func.HttpResponse(html, mimetype="text/html", status_code=200)
     url = "https://cube-etl.azurewebsites.net/api/trigger_etl?"
@@ -119,6 +128,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             </ul>
         </body>
     </html>
-    """.format(url + "function=etl", url + "function=drop", url + "name=John")
+    """.format(
+        url + "function=etl", url + "function=drop", url + "name=John"
+    )
 
     return func.HttpResponse(html, mimetype="text/html")
