@@ -1,5 +1,7 @@
 # Legislation ETL
-ETL application processing legislation data and deployed on Azure.
+ETL application processing legislation data and deployed on Azure. 
+- Deploying locally will process files from the legislation_files folder and insert into a local SQL Server instance
+- Azure deployment will process files already existing in a blob bucket and insert into a serverless Azure SQL Server instance
 
 
 ## Directory structure
@@ -109,3 +111,4 @@ EXEC search_any
 4. Power BI dashboard for insights
 5. Look for any inefficiencies (container/azurefunc memory, query performance etc)
 6. CI/CD (github actions / jenkins)
+7. Develop / automate infastructure deployment with terraform
