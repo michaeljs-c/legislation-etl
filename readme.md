@@ -87,3 +87,9 @@ Setup function
 func init legistlation_etl --worker-runtime python
 func new --template "Http Trigger" --name trigger_etl --worker-runtime python
 ```
+func azure functionapp publish cube-etl
+
+
+docker build -f local/Dockerfile -t cube-etl .
+docker run -v legislation_files:/app/legislation_files -it cube-etl -P rootPassword1 -S 172.21.0.1 -U sa
+python3 local_etl_cli.py -P rootPassword1 -S 172.21.0.1 -U sa -f legislation_files

@@ -33,12 +33,24 @@ def create_database(driver, server, database, username, password):
         logger.info(str(e))
     conn.close()
 
+def drop_database(driver, server, database, username, password):
+    conn, cursor = create_db_connection(driver=driver, server=server, username=username, password=password)
+    try:
+        cursor.execute(f"DROP DATABASE {database}")
+    except Exception as e:
+        logger.info(str(e))
+    conn.close()    
 
-def create_tables(cursor, sql_file_path):
+
+def execute_sql_file(cursor, sql_file_path, sep=None):
     with open(sql_file_path) as f:
-        table_queries = f.read()
-        cursor.execute(table_queries)
-
+        queries = f.read()
+        if sep:
+            query_list = queries.split(sep)
+            for q in query_list:
+                cursor.execute(q)
+        else:
+            cursor.execute(queries)
 
 def strip_html(string, re_sub_entities=None):
     # unescape HTML entities
@@ -113,7 +125,8 @@ def local_run(driver, server, database, username, password, legislation_path="le
     logger.info("Connected")
 
     curr_directory = os.path.dirname(os.path.realpath(__file__))
-    create_tables(cursor, os.path.join(curr_directory, "create_tables.sql"))
+    execute_sql_file(cursor, os.path.join(curr_directory, "create_tables.sql"))
+    execute_sql_file(cursor, os.path.join(curr_directory, "stored_procedures.sql"), sep="GO")
     
     logger.info("Running etl")
     start = time.time()

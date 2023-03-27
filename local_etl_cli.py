@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Local ETL for legislation to Sql Server')
     parser.add_argument('-D', '--driver', help='SQL Server driver string', default=DRIVER)
-    parser.add_argument('-S', '--server', help='SQL Server server name', default=SERVER)
+    parser.add_argument('-S', '--server', help='SQL Server server IP address (use host IP if using SS container)', default=SERVER)
     parser.add_argument('-d', '--database', help='Database name', default=DATABASE)
     parser.add_argument('-U', '--username', help='Database username', default=USERNAME)
     parser.add_argument('-P', '--password', help='Database password', required=True)
