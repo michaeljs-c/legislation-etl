@@ -1,4 +1,6 @@
 # Legislation ETL
+ETL application processing legislation data and deployed on Azure.
+
 
 ## Directory structure
 1. legislation_files - contains json files with legislation data
@@ -8,11 +10,11 @@
     - etl.py - core functionality for both azure and local deployment
 
 ## Data Models
-1. legislation
-2. legislation_version
-3. issuing_body
-4. jurisdiction
-5. part
+1. legislation: basis of a real-world legal document that contains rules and regulations.
+2. Legislation version: a specific version of a piece of legislation.
+3. Issuing body: the organization responsible for creating and issuing the legislation.
+4. Jurisdiction: the geographic area where a particular set of laws and regulations applies.
+5. Parts: the various components of legislation that organize and structure the document into sections, chapters, paragraphs, and clauses.
 
 ## Running the application locally
 
@@ -56,7 +58,7 @@ response = requests.get(url)
 print(response.content)
 
 ```
-To drop the database:
+To drop the database (~10 seconds):
 
 ```py
 import requests
