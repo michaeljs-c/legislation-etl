@@ -35,6 +35,7 @@ docker run -it cube-etl --help
 
 
 ## Azure Function API
+The API can either be called via a web browser or via API request as demonstrated below.
 
 To Run the ETL:
 ```py
@@ -74,8 +75,8 @@ print(response.content)
     - Content (optional)
 
 ```sql
-EXEC search_legislation 
-	@Jurisdiction = 'Japan', 
+EXEC search_legislation
+    @Jurisdiction = 'Japan',
     @Content = 'Enforcement'
 ```
 
@@ -84,5 +85,5 @@ EXEC search_legislation
 
 ```sql
 EXEC search_any 
-	@Search = 'tax', 
+	@Search = 'tax'
 ```

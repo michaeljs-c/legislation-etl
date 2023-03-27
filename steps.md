@@ -14,17 +14,6 @@
 
 
 ```sh
-docker run -it \
-    -e POSTGRES_USER="root" \
-    -e POSTGRES_PASSWORD="root" \
-    -e POSTGRES_DB="legislation" \
-    -v $(pwd)/data:/var/lib/postgresql/data \
-    -p 5432:5432 \
-    --name pg-database \
-    postgres:13
-```
-
-```sh
 # userid = 'sa'
 docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=rootPassword1" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
 ```
@@ -88,7 +77,6 @@ func init legistlation_etl --worker-runtime python
 func new --template "Http Trigger" --name trigger_etl --worker-runtime python
 ```
 func azure functionapp publish cube-etl
-
 
 docker build -f local/Dockerfile -t cube-etl .
 docker run -v legislation_files:/app/legislation_files -it cube-etl -P rootPassword1 -S 172.21.0.1 -U sa
