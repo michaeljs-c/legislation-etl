@@ -1,0 +1,6 @@
+/*
+
+# !Dockerfile
+!trigger_etl/
+!setup_odbc.sh
+!local_etl_cli.py
