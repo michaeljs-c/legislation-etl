@@ -17,7 +17,7 @@ Notes recorded during development process.
 Run SQL Server container
 ```sh
 # userid = 'sa'
-docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=rootPassword1" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
+docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=<password>" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
 ```
 
 Install sqlcmd on linux
@@ -39,8 +39,8 @@ sudo hwclock --hctosys
 
 Connect to local db
 ```sh
-sqlcmd -U sa -P rootPassword1 -H localhost -Q "create database legistlation" -S "(local)"
-sqlcmd -U sa -P rootPassword1 -H localhost -i create_tables.sql -d legislation -S "(local)"
+sqlcmd -U sa -P <password> -H localhost -Q "create database legistlation" -S "(local)"
+sqlcmd -U sa -P <password> -H localhost -i create_tables.sql -d legislation -S "(local)"
 ```
 Build and run app
 ```sh
@@ -90,6 +90,6 @@ func azure functionapp publish cube-etl
 Build and run app
 ```sh
 docker build -f local/Dockerfile -t cube-etl .
-docker run -v legislation_files:/app/legislation_files -it cube-etl -P rootPassword1 -S 172.21.0.1 -U sa
-python3 local_etl_cli.py -P rootPassword1 -S 172.21.0.1 -U sa -f legislation_files
+docker run -v legislation_files:/app/legislation_files -it cube-etl -P <password> -S <IP address> -U sa
+python3 local_etl_cli.py -P <password> -S <IP address> -U sa -f legislation_files
 ```

@@ -36,9 +36,9 @@ The image was developed on a linux machine, no guarentee that the odbc setup scr
 Running the app:
 ```sh
 # Running docker container (volume for data access -v <dir of data files>:/app/legislation_files)
-docker run -v legislation_files:/app/legislation_files -it cube-etl -P rootPassword1 -S 172.21.0.1 -U sa
+docker run -v legislation_files:/app/legislation_files -it cube-etl -P <password> -S <IP Address> -U sa
 # Running without docker
-python3 local_etl_cli.py -P rootPassword1 -S 172.21.0.1 -U sa -f legislation_files
+python3 local_etl_cli.py -P <password> -S <IP Address> -U sa -f legislation_files
 ```
 
 Checking the app CLI params:

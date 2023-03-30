@@ -3,7 +3,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       - ACCEPT_EULA=Y 
-      - MSSQL_SA_PASSWORD=rootPassword1
+      - MSSQL_SA_PASSWORD=<password>
     volumes:
       - "data:/var/lib/mssql-data/data:rw"
     ports:
